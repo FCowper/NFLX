@@ -1,8 +1,3 @@
-
-# coding: utf-8
-
-# In[ ]:
-
 # keys for twitter feed from PyNemesis
 
 apikey = 'YtqGNFX9DOTbrcFyOXyPzB2Ql'
@@ -19,30 +14,43 @@ from tweepy import Stream
 import json
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 import nltk
+import pyodbc
+import pandas as pd
+from pandas import DataFrame, Series
+
+conn = pyodbc.connect(r'DSN=twitter_stream_netflix')
+cur = conn.cursor()
+
 
 class StdOutListener(StreamListener):
-    
-    def on_data(self, data): # pulling the text out of the JSON file each tweet comes in
+    def on_data(self, data):  # pulling the text out of the JSON file each tweet comes in
         json_load = json.loads(data)
         texts = json_load['text']
         coded = texts.encode('utf-8')
-        s = str(coded) 
-        print (json.loads(data)['created_at']) # print the datetime of the tweet
-        print (s[1:]) # print the datetime of the tweet
-        ss = SentimentIntensityAnalyzer().polarity_scores(s) 
-        print(ss) # print the VADER sentiment scores for the tweet
-        print (json.loads(data)['coordinates'])
+        s = str(coded)
+        ss = SentimentIntensityAnalyzer().polarity_scores(s)
+        datetime = json.loads(data)['created_at']  # print the datetime of the tweet
+        text = s[1:]  # print the text of the tweet
+        compound = ss.get('compound', '0')
+        negative = ss.get('neg', '0')
+        positive = ss.get('pos', '0')
+        neutral = ss.get('neu', '0')  # print the VADER sentiment scores for the tweet
+        cur.execute('insert into twitter_stream_netflix (datetime_created, tweet_text, vader_compound, vader_negative,\
+        vader_positive, vader_neutral) values (?, ?, ?, ?, ?, ?)', datetime, text, compound, negative, positive,
+                    neutral)
+        conn.commit()  # insert values into SQL database
 
     def on_error(self, status):
         print(status)
-        
+
     def on_error(self, status_code):
         if status_code == 420:
-            #returning False in on_data disconnects the stream
+            # returning False in on_data disconnects the stream
             return False
 
+
 # authorisation
-        
+
 auth = tweepy.OAuthHandler(apikey, apisecret)
 auth.set_access_token(accesstoken, tokensecret)
 api = tweepy.API(auth)
@@ -51,16 +59,5 @@ api = tweepy.API(auth)
 
 stream_listener = StdOutListener()
 stream = tweepy.Stream(auth=api.auth, listener=stream_listener)
-stream.filter(track=['London'])
-tweet_sample = stream.filter(track=['London'])
-
-
-# In[ ]:
-
-
-
-
-# In[ ]:
-
-
-
+stream.filter(track=['Netflix'])
+tweet_sample = stream.filter(track=['Netflix'])
