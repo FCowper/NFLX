@@ -35,9 +35,16 @@ class StdOutListener(StreamListener):
         negative = ss.get('neg', '0')
         positive = ss.get('pos', '0')
         neutral = ss.get('neu', '0')  # print the VADER sentiment scores for the tweet
-        cur.execute('insert into twitter_stream_netflix (datetime_created, tweet_text, vader_compound, vader_negative,\
-        vader_positive, vader_neutral) values (?, ?, ?, ?, ?, ?)', datetime, text, compound, negative, positive,
-                    neutral)
+        user_id = json.loads(data)['user'].get('id', 'NA')
+        user_name = json.loads(data)['user'].get('name', 'NA')
+        user_screen_name = json.loads(data)['user'].get('screen_name', 'NA')
+        location = json.loads(data)['user'].get('location', 'NA')
+        num_of_followers = json.loads(data)['user'].get('followers_count', 'NA')
+        time_zone = json.loads(data)['user'].get('time_zone', 'NA')
+        cur.execute('insert into twitter_stream_netflix (datetime_created, user_id, user_name, user_screen_name,\
+         location, num_of_followers, time_zone, tweet_text, vader_compound, vader_negative,\
+        vader_positive, vader_neutral) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', datetime, user_id, user_name,\
+                    user_screen_name, location, num_of_followers, time_zone, text, compound, negative, positive, neutral)
         conn.commit()  # insert values into SQL database
 
     def on_error(self, status):
