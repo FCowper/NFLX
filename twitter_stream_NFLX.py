@@ -1,9 +1,9 @@
 # keys for twitter feed from PyNemesis
 
-apikey = 'kWhnROZnObvtproUubFxLclpZ'
-apisecret = 'ft8Wsfww5A5wbTH9e3RNUWMyFF1UEo4X35lOMKWRzuo4aZ2ZXA'
-accesstoken = '887695538174537730-HsCZZQZUk4ctR6EygxUaZQf7CiXT74X'
-tokensecret = '7QGrObRQfp0ftGzWSjbrEKkeS8doFgWMqucv8EwkT5fMw'
+apikey = 'YtqGNFX9DOTbrcFyOXyPzB2Ql'
+apisecret = 'YwAD6lYVEwENrA6VsHeDtwegr5SzHzVQRjbQdwYyHStsSsnQVh'
+accesstoken = '887695572307779585-jkM3ZKflhgIkjGzOCZa0n9ay3XMpdnW'
+tokensecret = 'jJTDBbBPlGqfVxyww70c8gp24qPwVDa44plyOtBMvY2Gt'
 
 # importing required libraries
 
@@ -21,10 +21,11 @@ from pandas import DataFrame, Series
 conn = pyodbc.connect(r'DSN=twitter_stream_netflix')
 cur = conn.cursor()
 
-try:
-    class StdOutListener(StreamListener):
-        def on_data(self, data):  # pulling the text out of the JSON file each tweet comes in
-            json_load = json.loads(data)
+
+class StdOutListener(StreamListener):
+    def on_data(self, data):  # pulling the text out of the JSON file each tweet comes in
+        json_load = json.loads(data)
+        try:
             texts = json_load['text']
             coded = texts.encode('utf-8')
             s = str(coded)
@@ -41,18 +42,18 @@ try:
             location = json.loads(data)['user'].get('location', 'NA')
             num_of_followers = json.loads(data)['user'].get('followers_count', 'NA')
             time_zone = json.loads(data)['user'].get('time_zone', 'NA')
-            cur.execute('insert into twitter_stream_netflix (datetime_created, user_id, user_name, user_screen_name,\
+            cur.execute('insert into twitter_stream_NFLX (datetime_created, user_id, user_name, user_screen_name,\
              location, num_of_followers, time_zone, tweet_text, vader_compound, vader_negative,\
             vader_positive, vader_neutral) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', datetime, user_id, user_name,\
                         user_screen_name, location, num_of_followers, time_zone, text, compound, negative, positive, neutral)
-            conn.commit()  # insert values into SQL database
-except:
-    cur.execute('insert into twitter_stream_netflix (datetime_created, user_id, user_name, user_screen_name,\
-         location, num_of_followers, time_zone, tweet_text, vader_compound, vader_negative,\
-        vader_positive, vader_neutral) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', 'NA', 'NA', 'NA', \
-                'NA', 'NA', 'NA', 'NA', 'NA', 0, 0, 0, 0)
-    conn.commit() # accounting for blank values
-    print ('YEEEEEEEEEEEEH BWOI SORTED MATE')
+            conn.commit()  # insert values into SQL databas
+        except:
+            cur.execute('insert into twitter_stream_NFLX (datetime_created, user_id, user_name, user_screen_name,\
+                 location, num_of_followers, time_zone, tweet_text, vader_compound, vader_negative,\
+                vader_positive, vader_neutral) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', 'NA', 'NA', 'NA', \
+                        'NA', 'NA', 'NA', 'NA', 'NA', 0, 0, 0, 0)
+            conn.commit() # accounting for blank values
+            print ('YEEEEEEEEEEEEH BWOI SORTED MATE')
 
     def on_error(self, status):
         print(status)
@@ -73,5 +74,5 @@ api = tweepy.API(auth)
 
 stream_listener = StdOutListener()
 stream = tweepy.Stream(auth=api.auth, listener=stream_listener)
-stream.filter(track=['Netflix', '@netflix'])
-tweet_sample = stream.filter(track=['Netflix', '@netflix'])
+stream.filter(track=['NFLX'])
+tweet_sample = stream.filter(track=['NFLX'])
