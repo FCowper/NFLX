@@ -11,6 +11,7 @@ import tweepy
 from tweepy.streaming import StreamListener
 from tweepy import OAuthHandler
 from tweepy import Stream
+import sys
 import json
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 import nltk
@@ -21,10 +22,11 @@ from pandas import DataFrame, Series
 conn = pyodbc.connect(r'DSN=twitter_stream_netflix')
 cur = conn.cursor()
 
-try:
-    class StdOutListener(StreamListener):
-        def on_data(self, data):  # pulling the text out of the JSON file each tweet comes in
-            json_load = json.loads(data)
+
+class StdOutListener(StreamListener):
+    def on_data(self, data):  # pulling the text out of the JSON file each tweet comes in
+        json_load = json.loads(data)
+        try:
             texts = json_load['text']
             coded = texts.encode('utf-8')
             s = str(coded)
@@ -46,21 +48,24 @@ try:
             vader_positive, vader_neutral) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', datetime, user_id, user_name,\
                         user_screen_name, location, num_of_followers, time_zone, text, compound, negative, positive, neutral)
             conn.commit()  # insert values into SQL database
-except:
-    cur.execute('insert into twitter_stream_netflix (datetime_created, user_id, user_name, user_screen_name,\
-         location, num_of_followers, time_zone, tweet_text, vader_compound, vader_negative,\
-        vader_positive, vader_neutral) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', 'NA', 'NA', 'NA', \
-                'NA', 'NA', 'NA', 'NA', 'NA', 0, 0, 0, 0)
-    conn.commit() # accounting for blank values
-    print ('YEEEEEEEEEEEEH BWOI SORTED MATE')
+        except:
+            cur.execute('insert into twitter_stream_netflix (datetime_created, user_id, user_name, user_screen_name,\
+                 location, num_of_followers, time_zone, tweet_text, vader_compound, vader_negative,\
+                vader_positive, vader_neutral) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', 'NA', 'NA', 'NA', \
+                        'NA', 'NA', 'NA', 'NA', 'NA', 0, 0, 0, 0)
+            conn.commit() # accounting for blank values
+            err = sys.exc_info()[2]
+            print (err)
+            print ('YEEEEEEEEEEEEH BWOI SORTED MATE')
 
-    def on_error(self, status):
-        print(status)
+            def on_error(self, status):
+                print(status)
 
-    def on_error(self, status_code):
-        if status_code == 420:
-            # returning False in on_data disconnects the stream
-            return False
+            def on_error(self, status_code):
+                if status_code == 420:
+                    # returning False in on_data disconnects the stream
+                    return False
+
 
 
 # authorisation
